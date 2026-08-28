@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}AEGIS BLACKSITE{% endblock %}
+    </title>
+
+    <style>
+        :root {
+            --bg: #070a0e;
+            --panel: #0d1218;
+            --panel-2: #111821;
+            --border: #26313b;
+            --border-strong: #3a4854;
+
+            --text: #d8e2ea;
+            --muted: #758391;
+
+            --accent: #8fb9d8;
+            --accent-soft: rgba(143, 185, 216, 0.10);
+
+            --green: #7fd6a3;
+            --amber: #d8b36a;
+            --red: #df7b7b;
+            --blue: #82b7e8;
+
+            --shadow:
+                0 12px 35px rgba(0, 0, 0, 0.28);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(70, 105, 130, 0.10),
+                    transparent 28%
+                ),
+                var(--bg);
+
+            color: var(--text);
+
+            font-family:
+                "Courier New",
+                Consolas,
+                monospace;
+
+            font-size: 14px;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code,
+        .mono {
+            font-family:
+                "Courier New",
+                Consolas,
+                monospace;
+        }
+
+        .app {
+            min-height: 100vh;
+
+            display: grid;
+
+            grid-template-columns:
+                250px
+                minmax(0, 1fr);
+        }
+
+        /* ==================================================
+           SIDEBAR
+           ================================================== */
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+
+            height: 100vh;
+
+            padding: 22px 16px;
+
+            border-right:
+                1px solid var(--border);
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0a0f14 0%,
+                    #080c11 100%
+                );
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            padding: 8px 10px 22px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            margin-bottom: 18px;
+        }
+
+        .brand-main {
+            color: var(--text);
+
+            font-size: 17px;
+            font-weight: bold;
+
+            letter-spacing: 2px;
+        }
+
+        .brand-sub {
+            margin-top: 7px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            letter-spacing: 1.5px;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav-section {
+            margin:
+                15px
+                10px
+                6px;
+
+            color: #56636f;
+
+            font-size: 9px;
+            letter-spacing: 1.8px;
+        }
+
+        .nav a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 10px 11px;
+
+            border:
+                1px solid transparent;
+
+            border-radius: 5px;
+
+            color: #9daab5;
+        }
+
+        .nav a:hover {
+            background: var(--accent-soft);
+
+            border-color:
+                rgba(143, 185, 216, 0.15);
+
+            color: var(--text);
+
+            text-decoration: none;
+        }
+
+        .nav a.active {
+            background: var(--accent-soft);
+
+            border-color:
+                rgba(143, 185, 216, 0.22);
+
+            color: var(--accent);
+        }
+
+        .nav .tag {
+            color: #52606d;
+
+            font-size: 9px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+
+            padding-top: 16px;
+
+            border-top:
+                1px solid var(--border);
+        }
+
+        .identity-mini {
+            padding: 11px;
+
+            background: var(--panel);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 5px;
+        }
+
+        .identity-label {
+            color: #56636f;
+
+            font-size: 9px;
+            letter-spacing: 1.5px;
+        }
+
+        .identity-name {
+            margin-top: 6px;
+
+            color: var(--text);
+
+            font-size: 13px;
+        }
+
+        .identity-meta {
+            margin-top: 6px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+        }
+
+        .terminate {
+            display: block;
+
+            margin-top: 10px;
+
+            color: #896565;
+
+            font-size: 10px;
+
+            text-align: center;
+        }
+
+        /* ==================================================
+           MAIN
+           ================================================== */
+
+        .content {
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 68px;
+
+            padding: 0 30px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                rgba(8, 12, 17, 0.75);
+
+            backdrop-filter: blur(8px);
+        }
+
+        .crumb {
+            color: var(--muted);
+
+            font-size: 11px;
+
+            letter-spacing: 1px;
+        }
+
+        .crumb strong {
+            color: var(--text);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: var(--green);
+
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: var(--green);
+
+            box-shadow:
+                0 0 10px
+                rgba(127, 214, 163, 0.4);
+        }
+
+        .page {
+            max-width: 1450px;
+
+            margin: 0 auto;
+
+            padding: 34px 30px 60px;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            margin-bottom: 8px;
+
+            color: var(--accent);
+
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        h1 {
+            margin: 0;
+
+            color: #edf4f8;
+
+            font-size: 29px;
+
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            max-width: 860px;
+
+            margin-top: 9px;
+
+            color: var(--muted);
+
+            line-height: 1.65;
+        }
+
+        /* ==================================================
+           PANELS
+           ================================================== */
+
+        .panel {
+            background:
+                linear-gradient(
+                    180deg,
+                    var(--panel-2),
+                    var(--panel)
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 7px;
+
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            padding: 15px 18px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            color: #c8d4dd;
+
+            font-size: 11px;
+
+            letter-spacing: 1.4px;
+        }
+
+        .panel-body {
+            padding: 18px;
+        }
+
+        /* ==================================================
+           CARDS
+           ================================================== */
+
+        .grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(220px, 1fr)
+                );
+
+            gap: 15px;
+        }
+
+        .metric {
+            padding: 18px;
+
+            background: var(--panel);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 6px;
+        }
+
+        .metric-label {
+            color: #687684;
+
+            font-size: 9px;
+            letter-spacing: 1.5px;
+        }
+
+        .metric-value {
+            margin-top: 8px;
+
+            color: #edf4f8;
+
+            font-size: 27px;
+        }
+
+        .metric-note {
+            margin-top: 6px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+        }
+
+        /* ==================================================
+           BADGES
+           ================================================== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+
+            padding: 4px 8px;
+
+            border:
+                1px solid var(--border-strong);
+
+            border-radius: 4px;
+
+            font-size: 9px;
+            letter-spacing: 1px;
+        }
+
+        .badge-green {
+            color: var(--green);
+
+            border-color:
+                rgba(127, 214, 163, 0.25);
+
+            background:
+                rgba(127, 214, 163, 0.06);
+        }
+
+        .badge-red {
+            color: var(--red);
+
+            border-color:
+                rgba(223, 123, 123, 0.25);
+
+            background:
+                rgba(223, 123, 123, 0.06);
+        }
+
+        .badge-amber {
+            color: var(--amber);
+
+            border-color:
+                rgba(216, 179, 106, 0.25);
+
+            background:
+                rgba(216, 179, 106, 0.06);
+        }
+
+        .badge-blue {
+            color: var(--blue);
+
+            border-color:
+                rgba(130, 183, 232, 0.25);
+
+            background:
+                rgba(130, 183, 232, 0.06);
+        }
+
+        /* ==================================================
+           TABLES
+           ================================================== */
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            text-align: left;
+
+            white-space: nowrap;
+        }
+
+        th {
+            color: #687684;
+
+            background: rgba(255,255,255,0.015);
+
+            font-size: 9px;
+            letter-spacing: 1.3px;
+        }
+
+        td {
+            color: #c2cdd5;
+
+            font-size: 12px;
+        }
+
+        tr:hover td {
+            background:
+                rgba(143, 185, 216, 0.035);
+        }
+
+        /* ==================================================
+           CALLOUTS
+           ================================================== */
+
+        .callout {
+            padding: 16px 18px;
+
+            border:
+                1px solid var(--border);
+
+            border-left:
+                3px solid var(--accent);
+
+            background:
+                rgba(143, 185, 216, 0.045);
+
+            border-radius: 5px;
+        }
+
+        .callout-title {
+            color: var(--accent);
+
+            font-size: 10px;
+
+            letter-spacing: 1.5px;
+        }
+
+        .callout-text {
+            margin-top: 7px;
+
+            color: #a7b4bd;
+
+            line-height: 1.65;
+        }
+
+        /* ==================================================
+           RESPONSIVE
+           ================================================== */
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+
+                height: auto;
+
+                border-right: 0;
+
+                border-bottom:
+                    1px solid var(--border);
+            }
+
+            .nav {
+                display: grid;
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .sidebar-bottom {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .page {
+                padding:
+                    25px
+                    16px
+                    40px;
+            }
+
+            .nav {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 23px;
+            }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-main">
+                AEGIS // BLACKSITE
+            </div>
+
+            <div class="brand-sub">
+                AUTHORIZATION INVESTIGATION NETWORK
+            </div>
+        </div>
+
+        <nav class="nav">
+
+            <div class="nav-section">
+                SYSTEM
+            </div>
+
+            <a href="/dashboard">
+                <span>DASHBOARD</span>
+            </a>
+
+            <a href="/resources">
+                <span>RESOURCES</span>
+            </a>
+
+            <a href="/reviews">
+                <span>REVIEWS</span>
+            </a>
+
+            <a href="/delegations">
+                <span>DELEGATIONS</span>
+            </a>
+
+            <a href="/operations">
+                <span>OPERATIONS</span>
+            </a>
+
+            <a href="/capabilities">
+                <span>CAPABILITIES</span>
+            </a>
+
+            <div class="nav-section">
+                FORENSICS
+            </div>
+
+            <a href="/audit">
+                <span>AUDIT STREAM</span>
+            </a>
+
+            <a href="/legacy">
+                <span>LEGACY SYSTEM</span>
+                <span class="tag">DEPRECATED</span>
+            </a>
+
+            <div class="nav-section">
+                TARGET
+            </div>
+
+            <a href="/vault">
+                <span>SEALED VAULT</span>
+                <span class="tag">R5</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="identity-mini">
+
+                <div class="identity-label">
+                    AUTHENTICATED OPERATOR
+                </div>
+
+                <div class="identity-name">
+                    {{ user.username }}
+                </div>
+
+                <div class="identity-meta">
+                    ROLE: {{ user.role|upper }}
+                    <br>
+                    CLEARANCE: R{{ user.clearance }}
+                </div>
+
+            </div>
+
+            <a
+                class="terminate"
+                href="/logout"
+            >
+                TERMINATE SESSION
+            </a>
+
+        </div>
+
+    </aside>
+
+    <section class="content">
+
+        <header class="topbar">
+
+            <div class="crumb">
+                AEGIS BLACKSITE
+                //
+                <strong>
+                    {% block section %}SYSTEM{% endblock %}
+                </strong>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                SYSTEM ONLINE
+            </div>
+
+        </header>
+
+        <main class="page">
+
+            {% block content %}{% endblock %}
+
+        </main>
+
+    </section>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Operation Intelligence
+{% endblock %}
+
+{% block section %}
+OPERATION INTELLIGENCE
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        05 // AUTHORIZATION CORRELATION
+    </div>
+
+    <h1>
+        OPERATION INTELLIGENCE
+    </h1>
+
+    <div class="subtitle">
+        Authorization operations represent complete requests for
+        access. Compare subject, requester, scope, policy revision,
+        lifecycle and surrounding evidence before accepting an
+        operation as valid.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATION RULE
+    </div>
+
+    <div class="callout-text">
+        A
+        <strong>COMPLETED</strong>
+        operation is not automatically authorized. Its review,
+        delegation, audit correlation and capability must agree.
+    </div>
+
+</div>
+
+<br>
+
+<div class="grid">
+
+    <div class="metric">
+        <div class="metric-label">
+            OPERATIONS
+        </div>
+
+        <div class="metric-value">
+            {{ operations|length }}
+        </div>
+
+        <div class="metric-note">
+            authorization operation records
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            VAULT REQUESTS
+        </div>
+
+        <div class="metric-value">
+            {{
+                operations
+                |selectattr("requested_scope", "equalto", "VAULT")
+                |list
+                |length
+            }}
+        </div>
+
+        <div class="metric-note">
+            requests targeting vault scope
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            COMPLETED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color:var(--green);"
+        >
+            {{
+                operations
+                |selectattr("state", "equalto", "COMPLETED")
+                |list
+                |length
+            }}
+        </div>
+
+        <div class="metric-note">
+            completed operation state
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            SUBJECT
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:20px;"
+        >
+            {{ user.username }}
+        </div>
+
+        <div class="metric-note">
+            authenticated investigator
+        </div>
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+        <div class="panel-title">
+            OPERATION SEARCH
+        </div>
+
+        <span class="badge badge-blue">
+            LIVE FILTERING
+        </span>
+    </div>
+
+    <div class="panel-body">
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:
+                    repeat(
+                        auto-fit,
+                        minmax(190px, 1fr)
+                    );
+                gap:10px;
+            "
+        >
+
+            <input
+                id="operationSearch"
+                type="text"
+                placeholder="SEARCH OPERATION / SUBJECT / RESOURCE / POLICY..."
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+
+            <select
+                id="scopeFilter"
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+                <option value="">ALL SCOPES</option>
+                <option value="VAULT">VAULT</option>
+                <option value="CONTROL">CONTROL</option>
+                <option value="PROJECT">PROJECT</option>
+            </select>
+
+            <select
+                id="versionFilter"
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+                <option value="">ALL POLICY VERSIONS</option>
+                <option value="6">v6</option>
+                <option value="7">v7</option>
+                <option value="8">v8</option>
+            </select>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            AUTHORIZATION OPERATIONS
+        </div>
+
+        <span
+            id="visibleCount"
+            class="badge badge-blue"
+        >
+            {{ operations|length }} RECORDS
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div class="table-wrap">
+
+            <table id="operationTable">
+
+                <thead>
+                    <tr>
+                        <th>OPERATION</th>
+                        <th>SCOPE</th>
+                        <th>VERSION</th>
+                        <th>STATE</th>
+                        <th>REQUESTER</th>
+                        <th>SUBJECT</th>
+                        <th>RESOURCE</th>
+                        <th>CREATED</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for operation in operations %}
+
+                    <tr
+                        class="operation-row"
+                        data-scope="{{ operation['requested_scope'] }}"
+                        data-version="{{ operation['policy_version'] }}"
+                        data-search="
+                            {{ operation['id'] }}
+                            {{ operation['requested_scope'] }}
+                            {{ operation['policy_version'] }}
+                            {{ operation['state'] }}
+                            {{ operation['requester_username'] }}
+                            {{ operation['subject_username'] }}
+                            {{ operation['resource_name'] }}
+                            {{ operation['policy_name'] }}
+                    "
+                        onclick="inspectOperation(this)"
+                        style="cursor:pointer;"
+                    >
+
+                        <td>
+                            <span
+                                class="mono"
+                                style="color:var(--accent);"
+                            >
+                                {{ operation["id"] }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if operation["requested_scope"] == "VAULT" %}
+                                <span class="badge badge-red">
+                                    VAULT
+                                </span>
+                            {% else %}
+                                <span class="badge badge-blue">
+                                    {{ operation["requested_scope"] }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            v{{ operation["policy_version"] }}
+                        </td>
+
+                        <td>
+                            {% if operation["state"] == "COMPLETED" %}
+                                <span class="badge badge-green">
+                                    COMPLETED
+                                </span>
+                            {% elif operation["state"] in ["FAILED", "CANCELLED"] %}
+                                <span class="badge badge-red">
+                                    {{ operation["state"] }}
+                                </span>
+                            {% else %}
+                                <span class="badge badge-amber">
+                                    {{ operation["state"] }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ operation["requester_username"] }}
+                        </td>
+
+                        <td>
+                            {{ operation["subject_username"] }}
+                        </td>
+
+                        <td>
+                            {{ operation["resource_name"] }}
+                        </td>
+
+                        <td>
+                            <span
+                                style="
+                                    color:var(--muted);
+                                    font-size:10px;
+                                "
+                            >
+                                {{ operation["created_at"] }}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            OPERATION INSPECTOR
+        </div>
+
+        <span
+            id="operationInspectorStatus"
+            class="badge"
+        >
+            SELECT AN OPERATION
+        </span>
+
+    </div>
+
+    <div
+        id="operationInspector"
+        class="panel-body"
+    >
+
+        <div
+            style="
+                padding:35px;
+                text-align:center;
+                color:var(--muted);
+            "
+        >
+            Select an operation to inspect its authorization
+            context.
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            CORRELATION TARGETS
+        </div>
+
+        <span class="badge badge-amber">
+            CROSS-REFERENCE
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div class="grid">
+
+            <a
+                href="/reviews"
+                class="metric"
+            >
+                <div class="metric-label">
+                    EVIDENCE 01
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    REVIEW
+                </div>
+
+                <div class="metric-note">
+                    Was the operation associated with
+                    a valid approval?
+                </div>
+            </a>
+
+            <a
+                href="/delegations"
+                class="metric"
+            >
+                <div class="metric-label">
+                    EVIDENCE 02
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    DELEGATION
+                </div>
+
+                <div class="metric-note">
+                    Did authority reach the operation
+                    subject under the correct scope?
+                </div>
+            </a>
+
+            <a
+                href="/audit"
+                class="metric"
+            >
+                <div class="metric-label">
+                    EVIDENCE 03
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    AUDIT
+                </div>
+
+                <div class="metric-note">
+                    Can the operation be reconstructed
+                    from a coherent event sequence?
+                </div>
+            </a>
+
+            <a
+                href="/vault"
+                class="metric"
+            >
+                <div class="metric-label">
+                    FINAL TARGET
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:17px;
+                        color:var(--red);
+                    "
+                >
+                    CAPABILITY
+                </div>
+
+                <div class="metric-note">
+                    A valid operation must ultimately
+                    correspond to a valid capability.
+                </div>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATOR NOTE
+    </div>
+
+    <div class="callout-text">
+        Several operations may appear plausible. Compare
+        <strong>scope</strong>,
+        <strong>policy revision</strong>,
+        <strong>subject</strong>,
+        <strong>review history</strong>,
+        <strong>delegation binding</strong>,
+        <strong>audit correlation</strong>
+        and
+        <strong>capability state</strong>
+        before accepting one.
+    </div>
+
+</div>
+
+<script>
+
+function inspectOperation(row) {
+
+    const cells =
+        row.querySelectorAll("td");
+
+    const operation =
+        cells[0].innerText.trim();
+
+    const scope =
+        cells[1].innerText.trim();
+
+    const version =
+        cells[2].innerText.trim();
+
+    const state =
+        cells[3].innerText.trim();
+
+    const requester =
+        cells[4].innerText.trim();
+
+    const subject =
+        cells[5].innerText.trim();
+
+    const resource =
+        cells[6].innerText.trim();
+
+    const created =
+        cells[7].innerText.trim();
+
+    document
+        .querySelectorAll(".operation-row")
+        .forEach(
+            item => {
+                item.style.background = "";
+            }
+        );
+
+    row.style.background =
+        "rgba(143, 185, 216, 0.07)";
+
+    document.getElementById(
+        "operationInspectorStatus"
+    ).innerText =
+        "OPERATION SELECTED";
+
+    document.getElementById(
+        "operationInspectorStatus"
+    ).className =
+        "badge badge-green";
+
+    document.getElementById(
+        "operationInspector"
+    ).innerHTML = `
+
+        <div class="grid">
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    OPERATION
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:15px;
+                        word-break:break-all;
+                    "
+                >
+                    ${operation}
+                </div>
+
+                <div class="metric-note">
+                    authorization operation identifier
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    SCOPE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${scope}
+                </div>
+
+                <div class="metric-note">
+                    requested authority scope
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    POLICY
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${version}
+                </div>
+
+                <div class="metric-note">
+                    operation policy revision
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    STATE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${state}
+                </div>
+
+                <div class="metric-note">
+                    operation lifecycle state
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div class="panel-title">
+                    OPERATION CONTEXT
+                </div>
+
+            </div>
+
+            <div class="panel-body">
+
+                <div class="grid">
+
+                    <div class="callout">
+                        <div class="callout-title">
+                            REQUESTER
+                        </div>
+                        <div class="callout-text">
+                            <strong>${requester}</strong>
+                        </div>
+                    </div>
+
+                    <div class="callout">
+                        <div class="callout-title">
+                            SUBJECT
+                        </div>
+                        <div class="callout-text">
+                            <strong>${subject}</strong>
+                        </div>
+                    </div>
+
+                    <div class="callout">
+                        <div class="callout-title">
+                            RESOURCE
+                        </div>
+                        <div class="callout-text">
+                            <strong>${resource}</strong>
+                        </div>
+                    </div>
+
+                    <div class="callout">
+                        <div class="callout-title">
+                            CREATED
+                        </div>
+                        <div class="callout-text">
+                            ${created}
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="callout">
+
+            <div class="callout-title">
+                CORRELATION QUESTIONS
+            </div>
+
+            <div class="callout-text">
+
+                01 — Is this operation tied to the correct review?
+
+                <br>
+
+                02 — Does the delegation identify the same subject?
+
+                <br>
+
+                03 — Does the delegation grant the same scope?
+
+                <br>
+
+                04 — Does the policy revision agree across records?
+
+                <br>
+
+                05 — Does the audit trace form a complete sequence?
+
+                <br>
+
+                06 — Does a matching active capability exist?
+
+                <br><br>
+
+                Use the corresponding evidence pages to answer
+                these questions.
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+function filterOperations() {
+
+    const query =
+        document
+            .getElementById("operationSearch")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const scope =
+        document
+            .getElementById("scopeFilter")
+            .value;
+
+    const version =
+        document
+            .getElementById("versionFilter")
+            .value;
+
+    const rows =
+        document.querySelectorAll(
+            ".operation-row"
+        );
+
+    let visible = 0;
+
+    rows.forEach(
+        row => {
+
+            const searchValue =
+                row.dataset.search
+                    .replace(/\s+/g, " ")
+                    .toLowerCase();
+
+            const matchesSearch =
+                searchValue.includes(query);
+
+            const matchesScope =
+                !scope ||
+                row.dataset.scope === scope;
+
+            const matchesVersion =
+                !version ||
+                row.dataset.version === version;
+
+            const show =
+                matchesSearch
+                && matchesScope
+                && matchesVersion;
+
+            row.style.display =
+                show ? "" : "none";
+
+            if (show) {
+                visible++;
+            }
+
+        }
+    );
+
+    document.getElementById(
+        "visibleCount"
+    ).innerText =
+        `${visible} RECORDS`;
+}
+
+document
+    .getElementById("operationSearch")
+    .addEventListener(
+        "input",
+        filterOperations
+    );
+
+document
+    .getElementById("scopeFilter")
+    .addEventListener(
+        "change",
+        filterOperations
+    );
+
+document
+    .getElementById("versionFilter")
+    .addEventListener(
+        "change",
+        filterOperations
+    );
+
+</script>
+
+{% endblock %}

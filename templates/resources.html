@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Resource Intelligence
+{% endblock %}
+
+{% block section %}
+RESOURCE INTELLIGENCE
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        01 // RESOURCE FORENSICS
+    </div>
+
+    <h1>
+        RESOURCE INTELLIGENCE
+    </h1>
+
+    <div class="subtitle">
+        Inventory of protected AEGIS resources. Cross-reference
+        classification, project ownership and current policy
+        assignment before investigating historical authorization.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATION NOTE
+    </div>
+
+    <div class="callout-text">
+        The current policy attached to a resource describes its
+        present authorization boundary. Historical authorization
+        may reference an earlier policy revision.
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     RESOURCE OVERVIEW
+     ========================================================= -->
+
+<div class="grid">
+
+    <div class="metric">
+
+        <div class="metric-label">
+            RESOURCE RECORDS
+        </div>
+
+        <div class="metric-value">
+            {{ resources|length }}
+        </div>
+
+        <div class="metric-note">
+            protected resources discovered
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            TARGET CLASS
+        </div>
+
+        <div class="metric-value">
+            R5
+        </div>
+
+        <div class="metric-note">
+            BLACKSITE classification
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            CURRENT POLICY
+        </div>
+
+        <div class="metric-value">
+            v8
+        </div>
+
+        <div class="metric-note">
+            current BLACKSITE policy revision
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            DIRECT ACTOR
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--red);"
+        >
+            R{{ user.clearance }}
+        </div>
+
+        <div class="metric-note">
+            current operator clearance
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     RESOURCE REGISTRY
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            RESOURCE REGISTRY
+        </div>
+
+        <span class="badge badge-blue">
+            {{ resources|length }} RECORDS
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div style="margin-bottom: 15px;">
+
+            <input
+                id="resourceSearch"
+                type="text"
+                placeholder="FILTER RESOURCE / PROJECT / POLICY..."
+                style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: #090e13;
+                    color: var(--text);
+                    border: 1px solid var(--border);
+                    border-radius: 5px;
+                    font-family: inherit;
+                    font-size: 11px;
+                    outline: none;
+                "
+            >
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table id="resourceTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>RESOURCE</th>
+                        <th>ALIAS</th>
+                        <th>CLASS</th>
+                        <th>PROJECT</th>
+                        <th>POLICY</th>
+                        <th>VERSION</th>
+                        <th>STATUS</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for resource in resources %}
+
+                    <tr
+                        data-resource="
+                            {{ resource['name'] }}
+                            {{ resource['alias'] }}
+                            {{ resource['project_name'] }}
+                            {{ resource['policy_name'] }}
+                    "
+                        onclick="selectResource(this)"
+                        style="cursor: pointer;"
+                    >
+
+                        <td>
+                            <span class="mono">
+                                {{ resource["name"] }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span
+                                class="mono"
+                                style="color: var(--muted);"
+                            >
+                                {{ resource["alias"] }}
+                            </span>
+                        </td>
+
+                        <td>
+
+                            {% if resource["classification"] >= 5 %}
+
+                                <span class="badge badge-red">
+                                    R{{ resource["classification"] }}
+                                </span>
+
+                            {% elif resource["classification"] >= 4 %}
+
+                                <span class="badge badge-amber">
+                                    R{{ resource["classification"] }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-blue">
+                                    R{{ resource["classification"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ resource["project_name"] }}
+                        </td>
+
+                        <td>
+                            {{ resource["policy_name"] }}
+                        </td>
+
+                        <td>
+                            v{{ resource["policy_version"] }}
+                        </td>
+
+                        <td>
+
+                            {% if resource["name"] == "BLACKSITE_RESOURCE" %}
+
+                                <span class="badge badge-red">
+                                    TARGET
+                                </span>
+
+                            {% else %}
+
+                                <span
+                                    class="badge"
+                                    style="color: var(--muted);"
+                                >
+                                    REGISTERED
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     RESOURCE INSPECTOR
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            RESOURCE INSPECTOR
+        </div>
+
+        <span
+            id="inspectorStatus"
+            class="badge"
+        >
+            SELECT A RECORD
+        </span>
+
+    </div>
+
+    <div
+        id="inspector"
+        class="panel-body"
+    >
+
+        <div
+            style="
+                padding: 30px;
+                text-align: center;
+                color: var(--muted);
+            "
+        >
+            Select a resource from the registry to inspect
+            its authorization metadata.
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     INVESTIGATION GUIDANCE
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            NEXT INVESTIGATION STEP
+        </div>
+
+        <span class="badge badge-amber">
+            FOLLOW THE EVIDENCE
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div class="grid">
+
+            <a
+                href="/reviews"
+                class="metric"
+            >
+
+                <div class="metric-label">
+                    NEXT
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size: 17px;"
+                >
+                    REVIEW LEDGER
+                </div>
+
+                <div class="metric-note">
+                    Determine which authorization requests
+                    reached an approved state.
+                </div>
+
+            </a>
+
+            <a
+                href="/delegations"
+                class="metric"
+            >
+
+                <div class="metric-label">
+                    CROSS-REFERENCE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size: 17px;"
+                >
+                    DELEGATION LEDGER
+                </div>
+
+                <div class="metric-note">
+                    Compare principal, delegate, scope,
+                    policy revision and lifecycle.
+                </div>
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function selectResource(row) {
+
+    const cells = row.querySelectorAll("td");
+
+    const name = cells[0].innerText.trim();
+    const alias = cells[1].innerText.trim();
+    const classification = cells[2].innerText.trim();
+    const project = cells[3].innerText.trim();
+    const policy = cells[4].innerText.trim();
+    const version = cells[5].innerText.trim();
+    const status = cells[6].innerText.trim();
+
+    document.querySelectorAll(
+        "#resourceTable tbody tr"
+    ).forEach(
+        item => {
+            item.style.background = "";
+        }
+    );
+
+    row.style.background =
+        "rgba(143, 185, 216, 0.07)";
+
+    document.getElementById(
+        "inspectorStatus"
+    ).innerText = "RECORD SELECTED";
+
+    document.getElementById(
+        "inspectorStatus"
+    ).className =
+        "badge badge-green";
+
+    document.getElementById(
+        "inspector"
+    ).innerHTML = `
+
+        <div class="grid">
+
+            <div class="metric">
+                <div class="metric-label">
+                    RESOURCE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${name}
+                </div>
+
+                <div class="metric-note">
+                    protected resource identifier
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    ALIAS
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${alias}
+                </div>
+
+                <div class="metric-note">
+                    registry alias
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    CLASSIFICATION
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${classification}
+                </div>
+
+                <div class="metric-note">
+                    resource sensitivity
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    PROJECT
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${project}
+                </div>
+
+                <div class="metric-note">
+                    owning project
+                </div>
+            </div>
+
+        </div>
+
+        <br>
+
+        <div
+            style="
+                display: grid;
+                grid-template-columns:
+                    repeat(
+                        auto-fit,
+                        minmax(220px, 1fr)
+                    );
+                gap: 15px;
+            "
+        >
+
+            <div class="callout">
+
+                <div class="callout-title">
+                    CURRENT POLICY
+                </div>
+
+                <div class="callout-text">
+
+                    ${policy}
+
+                    <br><br>
+
+                    Current revision:
+                    <strong>${version}</strong>
+
+                </div>
+
+            </div>
+
+            <div class="callout">
+
+                <div class="callout-title">
+                    REGISTRY STATUS
+                </div>
+
+                <div class="callout-text">
+
+                    ${status}
+
+                    <br><br>
+
+                    The registry only exposes the
+                    resource's current policy assignment.
+                    Historical revisions must be investigated
+                    separately.
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div>
+
+            <a
+                href="/reviews"
+                style="
+                    display: inline-block;
+                    padding: 10px 14px;
+                    border: 1px solid var(--border-strong);
+                    border-radius: 5px;
+                    background: var(--accent-soft);
+                "
+            >
+                INVESTIGATE REVIEWS →
+            </a>
+
+            <a
+                href="/delegations"
+                style="
+                    display: inline-block;
+                    margin-left: 8px;
+                    padding: 10px 14px;
+                    border: 1px solid var(--border-strong);
+                    border-radius: 5px;
+                "
+            >
+                OPEN DELEGATION LEDGER →
+            </a>
+
+        </div>
+    `;
+}
+
+document
+    .getElementById("resourceSearch")
+    .addEventListener(
+        "input",
+        function () {
+
+            const query =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            document
+                .querySelectorAll(
+                    "#resourceTable tbody tr"
+                )
+                .forEach(
+                    row => {
+
+                        const value =
+                            row.dataset.resource
+                                .toLowerCase();
+
+                        row.style.display =
+                            value.includes(query)
+                                ? ""
+                                : "none";
+
+                    }
+                );
+        }
+    );
+
+</script>
+
+{% endblock %}

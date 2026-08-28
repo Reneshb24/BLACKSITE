@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Review Intelligence
+{% endblock %}
+
+{% block section %}
+REVIEW INTELLIGENCE
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        02 // AUTHORIZATION FORENSICS
+    </div>
+
+    <h1>
+        REVIEW INTELLIGENCE
+    </h1>
+
+    <div class="subtitle">
+        Review records describe how authorization requests were
+        evaluated. A review is evidence of an authorization decision,
+        not authorization by itself. Cross-reference the reviewer,
+        principal, policy revision and later operation history.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATION RULE
+    </div>
+
+    <div class="callout-text">
+        An
+        <strong>APPROVED</strong>
+        review does not automatically prove that a later
+        delegation or capability was valid. Follow the complete
+        authorization chain.
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     REVIEW SUMMARY
+     ========================================================= -->
+
+<div class="grid">
+
+    {% set approved = reviews
+        |selectattr("state", "equalto", "APPROVED")
+        |list|length
+    %}
+
+    {% set pending = reviews
+        |selectattr("state", "equalto", "PENDING")
+        |list|length
+    %}
+
+    {% set rejected = reviews
+        |selectattr("state", "equalto", "REJECTED")
+        |list|length
+    %}
+
+    {% set expired = reviews
+        |selectattr("state", "equalto", "EXPIRED")
+        |list|length
+    %}
+
+    <div class="metric">
+
+        <div class="metric-label">
+            TOTAL REVIEWS
+        </div>
+
+        <div class="metric-value">
+            {{ reviews|length }}
+        </div>
+
+        <div class="metric-note">
+            authorization review records
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            APPROVED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--green);"
+        >
+            {{ approved }}
+        </div>
+
+        <div class="metric-note">
+            approved review records
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            PENDING
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--amber);"
+        >
+            {{ pending }}
+        </div>
+
+        <div class="metric-note">
+            unresolved review state
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            NON-APPROVED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--red);"
+        >
+            {{ rejected + expired }}
+        </div>
+
+        <div class="metric-note">
+            rejected or expired records
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     REVIEW LEDGER
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            REVIEW LEDGER
+        </div>
+
+        <span class="badge badge-blue">
+            {{ reviews|length }} RECORDS
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div style="margin-bottom: 15px;">
+
+            <input
+                id="reviewSearch"
+                type="text"
+                placeholder="FILTER ID / STATE / POLICY / REVIEWER / PRINCIPAL..."
+                style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: #090e13;
+                    color: var(--text);
+                    border: 1px solid var(--border);
+                    border-radius: 5px;
+                    font-family: inherit;
+                    font-size: 11px;
+                    outline: none;
+                "
+            >
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table id="reviewTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>REVIEW</th>
+                        <th>STATE</th>
+                        <th>RESOURCE</th>
+                        <th>POLICY</th>
+                        <th>VERSION</th>
+                        <th>REVIEWER</th>
+                        <th>PRINCIPAL</th>
+                        <th>SUBJECT</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for review in reviews %}
+
+                    <tr
+                        class="review-row"
+                        data-search="
+                            {{ review['id'] }}
+                            {{ review['state'] }}
+                            {{ review['resource_name'] }}
+                            {{ review['policy_name'] }}
+                            {{ review['reviewer_username'] }}
+                            {{ review['principal_username'] }}
+                            {{ review['subject_username'] }}
+                    "
+                        onclick="inspectReview(this)"
+                        data-review-id="{{ review['id'] }}"
+                    >
+
+                        <td>
+
+                            <span
+                                class="mono"
+                                style="color: var(--accent);"
+                            >
+                                {{ review["id"] }}
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if review["state"] == "APPROVED" %}
+
+                                <span class="badge badge-green">
+                                    APPROVED
+                                </span>
+
+                            {% elif review["state"] == "PENDING" %}
+
+                                <span class="badge badge-amber">
+                                    PENDING
+                                </span>
+
+                            {% elif review["state"] in ["REJECTED", "EXPIRED"] %}
+
+                                <span class="badge badge-red">
+                                    {{ review["state"] }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge">
+                                    {{ review["state"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ review["resource_name"] }}
+                        </td>
+
+                        <td>
+                            {{ review["policy_name"] }}
+                        </td>
+
+                        <td>
+                            v{{ review["policy_version"] }}
+                        </td>
+
+                        <td>
+                            {{ review["reviewer_username"] }}
+                        </td>
+
+                        <td>
+                            {{ review["principal_username"] }}
+                        </td>
+
+                        <td>
+                            {{ review["subject_username"] }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     REVIEW INSPECTOR
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            REVIEW INSPECTOR
+        </div>
+
+        <span
+            id="reviewInspectorStatus"
+            class="badge"
+        >
+            SELECT A REVIEW
+        </span>
+
+    </div>
+
+    <div
+        id="reviewInspector"
+        class="panel-body"
+    >
+
+        <div
+            style="
+                padding: 35px;
+                text-align: center;
+                color: var(--muted);
+            "
+        >
+            Select a review record to inspect its authorization
+            relationships.
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     INVESTIGATION GUIDANCE
+     ========================================================= -->
+
+<div class="grid">
+
+    <a
+        href="/delegations"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            NEXT EVIDENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            DELEGATION LEDGER
+        </div>
+
+        <div class="metric-note">
+            Determine whether an approved review resulted
+            in a matching delegation.
+        </div>
+
+    </a>
+
+    <a
+        href="/audit"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            CROSS-REFERENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            AUDIT STREAM
+        </div>
+
+        <div class="metric-note">
+            Verify whether the review belongs to a coherent
+            operation history.
+        </div>
+
+    </a>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        WHAT TO RECORD
+    </div>
+
+    <div class="callout-text">
+        Pay attention to the review identifier, policy revision,
+        reviewer, principal and subject. Those relationships can
+        later be compared against delegation and operation records.
+    </div>
+
+</div>
+
+<script>
+
+function inspectReview(row) {
+
+    const cells = row.querySelectorAll("td");
+
+    const reviewId =
+        cells[0].innerText.trim();
+
+    const state =
+        cells[1].innerText.trim();
+
+    const resource =
+        cells[2].innerText.trim();
+
+    const policy =
+        cells[3].innerText.trim();
+
+    const version =
+        cells[4].innerText.trim();
+
+    const reviewer =
+        cells[5].innerText.trim();
+
+    const principal =
+        cells[6].innerText.trim();
+
+    const subject =
+        cells[7].innerText.trim();
+
+    document
+        .querySelectorAll(".review-row")
+        .forEach(
+            item => {
+                item.style.background = "";
+            }
+        );
+
+    row.style.background =
+        "rgba(143, 185, 216, 0.07)";
+
+    document.getElementById(
+        "reviewInspectorStatus"
+    ).innerText = "RECORD SELECTED";
+
+    document.getElementById(
+        "reviewInspectorStatus"
+    ).className =
+        "badge badge-green";
+
+    document.getElementById(
+        "reviewInspector"
+    ).innerHTML = `
+
+        <div class="grid">
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    REVIEW
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:17px;
+                        word-break:break-all;
+                    "
+                >
+                    ${reviewId}
+                </div>
+
+                <div class="metric-note">
+                    authorization review identifier
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    STATE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${state}
+                </div>
+
+                <div class="metric-note">
+                    current recorded review state
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    POLICY
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${policy}
+                </div>
+
+                <div class="metric-note">
+                    ${version}
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    RESOURCE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${resource}
+                </div>
+
+                <div class="metric-note">
+                    reviewed resource
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div class="panel-title">
+                    AUTHORITY RELATIONSHIPS
+                </div>
+
+            </div>
+
+            <div
+                class="panel-body"
+                style="
+                    display:grid;
+                    grid-template-columns:
+                        repeat(
+                            auto-fit,
+                            minmax(200px, 1fr)
+                        );
+                    gap:15px;
+                "
+            >
+
+                <div class="callout">
+
+                    <div class="callout-title">
+                        REVIEWER
+                    </div>
+
+                    <div class="callout-text">
+                        <strong>
+                            ${reviewer}
+                        </strong>
+
+                        <br><br>
+
+                        Actor responsible for the
+                        recorded review decision.
+                    </div>
+
+                </div>
+
+                <div class="callout">
+
+                    <div class="callout-title">
+                        PRINCIPAL
+                    </div>
+
+                    <div class="callout-text">
+                        <strong>
+                            ${principal}
+                        </strong>
+
+                        <br><br>
+
+                        Authority associated with
+                        the reviewed authorization.
+                    </div>
+
+                </div>
+
+                <div class="callout">
+
+                    <div class="callout-title">
+                        SUBJECT
+                    </div>
+
+                    <div class="callout-text">
+                        <strong>
+                            ${subject}
+                        </strong>
+
+                        <br><br>
+
+                        Identity associated with
+                        the requested access.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="callout">
+
+            <div class="callout-title">
+                INVESTIGATOR NOTE
+            </div>
+
+            <div class="callout-text">
+
+                This record proves that a review exists.
+                It does not independently prove that the
+                associated operation, delegation or capability
+                was valid.
+
+                <br><br>
+
+                Continue to the delegation and audit systems
+                before drawing a conclusion.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <a
+            href="/delegations"
+            style="
+                display:inline-block;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+                background:var(--accent-soft);
+            "
+        >
+            CROSS-REFERENCE DELEGATIONS →
+        </a>
+
+        <a
+            href="/audit"
+            style="
+                display:inline-block;
+                margin-left:8px;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+            "
+        >
+            TRACE AUDIT EVENTS →
+        </a>
+    `;
+}
+
+document
+    .getElementById("reviewSearch")
+    .addEventListener(
+        "input",
+        function () {
+
+            const query =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            document
+                .querySelectorAll(
+                    ".review-row"
+                )
+                .forEach(
+                    row => {
+
+                        const value =
+                            row.dataset.search
+                                .replace(/\s+/g, " ")
+                                .toLowerCase();
+
+                        row.style.display =
+                            value.includes(query)
+                                ? ""
+                                : "none";
+                    }
+                );
+        }
+    );
+
+</script>
+
+{% endblock %}

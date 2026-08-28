@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Mission Control
+{% endblock %}
+
+{% block section %}
+MISSION CONTROL
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        AUTHORIZATION INVESTIGATION
+    </div>
+
+    <h1>
+        MISSION CONTROL
+    </h1>
+
+    <div class="subtitle">
+        You are operating as a low-privileged investigator inside
+        the AEGIS authorization network. Direct access to the
+        BLACKSITE vault is denied under the current policy.
+        Your task is to reconstruct the historical authorization
+        chain that may have produced a valid capability.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        CURRENT ACCESS STATE
+    </div>
+
+    <div class="callout-text">
+        Identity
+        <strong>{{ user.username }}</strong>
+        is authenticated as
+        <strong>{{ user.role }}</strong>
+        with clearance
+        <strong>R{{ user.clearance }}</strong>.
+        Investigate the authorization records rather than
+        attempting direct access.
+    </div>
+
+</div>
+
+<br>
+
+<div class="grid">
+
+    <div class="metric">
+        <div class="metric-label">
+            IDENTITY
+        </div>
+
+        <div class="metric-value">
+            {{ user.username }}
+        </div>
+
+        <div class="metric-note">
+            authenticated operator
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            ROLE
+        </div>
+
+        <div class="metric-value">
+            {{ user.role }}
+        </div>
+
+        <div class="metric-note">
+            current role
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            CLEARANCE
+        </div>
+
+        <div class="metric-value">
+            R{{ user.clearance }}
+        </div>
+
+        <div class="metric-note">
+            current clearance
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            DIRECT VAULT ACCESS
+        </div>
+
+        <div class="metric-value"
+             style="color: var(--red);">
+            DENIED
+        </div>
+
+        <div class="metric-note">
+            current policy enforcement
+        </div>
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            INVESTIGATION WORKFLOW
+        </div>
+
+        <span class="badge badge-blue">
+            V2 AUTHORIZATION MODEL
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div class="grid">
+
+            <a
+                href="/resources"
+                class="metric"
+            >
+                <div class="metric-label">
+                    01
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    RESOURCE INTELLIGENCE
+                </div>
+
+                <div class="metric-note">
+                    Identify the protected resource,
+                    project and current policy.
+                </div>
+            </a>
+
+            <a
+                href="/reviews"
+                class="metric"
+            >
+                <div class="metric-label">
+                    02
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    REVIEW LEDGER
+                </div>
+
+                <div class="metric-note">
+                    Reconstruct approval history
+                    and reviewer authority.
+                </div>
+            </a>
+
+            <a
+                href="/delegations"
+                class="metric"
+            >
+                <div class="metric-label">
+                    03
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    DELEGATION LEDGER
+                </div>
+
+                <div class="metric-note">
+                    Examine scope, lifecycle,
+                    constraints and binding.
+                </div>
+            </a>
+
+            <a
+                href="/audit"
+                class="metric"
+            >
+                <div class="metric-label">
+                    04
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    AUDIT CORRELATION
+                </div>
+
+                <div class="metric-note">
+                    Trace operation history and
+                    identify coherent sequences.
+                </div>
+            </a>
+
+            <a
+                href="/legacy"
+                class="metric"
+            >
+                <div class="metric-label">
+                    05
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    LEGACY FORENSICS
+                </div>
+
+                <div class="metric-note">
+                    Examine the deprecated
+                    authorization architecture.
+                </div>
+            </a>
+
+            <a
+                href="/vault"
+                class="metric"
+            >
+                <div class="metric-label">
+                    06
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    SEALED VAULT
+                </div>
+
+                <div class="metric-note">
+                    Submit the final authorization
+                    proof.
+                </div>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATION PRINCIPLE
+    </div>
+
+    <div class="callout-text">
+        No single record proves authorization. Cross-reference
+        policy history, review events, delegation state,
+        operation state, audit correlation and capability binding.
+    </div>
+
+</div>
+
+{% endblock %}

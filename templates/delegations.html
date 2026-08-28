@@ -1,0 +1,934 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Delegation Intelligence
+{% endblock %}
+
+{% block section %}
+DELEGATION INTELLIGENCE
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        03 // AUTHORITY TRANSFER FORENSICS
+    </div>
+
+    <h1>
+        DELEGATION INTELLIGENCE
+    </h1>
+
+    <div class="subtitle">
+        Delegations record the transfer of authority between a
+        principal and a delegate. Scope, policy revision, lifecycle
+        state and identity relationships must be evaluated together.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATION RULE
+    </div>
+
+    <div class="callout-text">
+        An
+        <strong>ACTIVE</strong>
+        delegation is not sufficient evidence by itself.
+        Determine whether its scope, policy revision, principal,
+        delegate and later authorization operation agree.
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     SUMMARY
+     ========================================================= -->
+
+{% set active_count = delegations
+    |selectattr("state", "equalto", "ACTIVE")
+    |list|length
+%}
+
+{% set expired_count = delegations
+    |selectattr("state", "equalto", "EXPIRED")
+    |list|length
+%}
+
+{% set inactive_count = delegations
+    |selectattr("state", "equalto", "INACTIVE")
+    |list|length
+%}
+
+<div class="grid">
+
+    <div class="metric">
+
+        <div class="metric-label">
+            TOTAL DELEGATIONS
+        </div>
+
+        <div class="metric-value">
+            {{ delegations|length }}
+        </div>
+
+        <div class="metric-note">
+            authority transfer records
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            ACTIVE
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--green);"
+        >
+            {{ active_count }}
+        </div>
+
+        <div class="metric-note">
+            currently active records
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            EXPIRED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--red);"
+        >
+            {{ expired_count }}
+        </div>
+
+        <div class="metric-note">
+            lifecycle-invalid records
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            INACTIVE
+        </div>
+
+        <div
+            class="metric-value"
+            style="color: var(--amber);"
+        >
+            {{ inactive_count }}
+        </div>
+
+        <div class="metric-note">
+            non-active records
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     LEDGER
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            DELEGATION LEDGER
+        </div>
+
+        <span class="badge badge-blue">
+            {{ delegations|length }} RECORDS
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <input
+            id="delegationSearch"
+            type="text"
+            placeholder="FILTER ID / PRINCIPAL / DELEGATE / SCOPE / POLICY..."
+            style="
+                width: 100%;
+                padding: 12px 14px;
+                margin-bottom: 15px;
+                background: #090e13;
+                color: var(--text);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                font-family: inherit;
+                font-size: 11px;
+                outline: none;
+            "
+        >
+
+        <div class="table-wrap">
+
+            <table id="delegationTable">
+
+                <thead>
+
+                    <tr>
+                        <th>DELEGATION</th>
+                        <th>STATE</th>
+                        <th>PRINCIPAL</th>
+                        <th>DELEGATE</th>
+                        <th>RESOURCE</th>
+                        <th>SCOPE</th>
+                        <th>POLICY</th>
+                        <th>VERSION</th>
+                        <th>OPERATION</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for delegation in delegations %}
+
+                    <tr
+                        class="delegation-row"
+                        data-search="
+                            {{ delegation['id'] }}
+                            {{ delegation['state'] }}
+                            {{ delegation['principal_username'] }}
+                            {{ delegation['delegate_username'] }}
+                            {{ delegation['resource_name'] }}
+                            {{ delegation['scope'] }}
+                            {{ delegation['policy_name'] }}
+                            {{ delegation['policy_version'] }}
+                    "
+                        onclick="inspectDelegation(this)"
+                        style="cursor:pointer;"
+                    >
+
+                        <td>
+
+                            <span
+                                class="mono"
+                                style="color:var(--accent);"
+                            >
+                                {{ delegation["id"] }}
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if delegation["state"] == "ACTIVE" %}
+
+                                <span class="badge badge-green">
+                                    ACTIVE
+                                </span>
+
+                            {% elif delegation["state"] in ["EXPIRED", "REVOKED"] %}
+
+                                <span class="badge badge-red">
+                                    {{ delegation["state"] }}
+                                </span>
+
+                            {% elif delegation["state"] == "SUSPENDED" %}
+
+                                <span class="badge badge-amber">
+                                    SUSPENDED
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge">
+                                    {{ delegation["state"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ delegation["principal_username"] }}
+                        </td>
+
+                        <td>
+                            {{ delegation["delegate_username"] }}
+                        </td>
+
+                        <td>
+
+                            {{ delegation["resource_name"] }}
+
+                            <br>
+
+                            <span
+                                style="
+                                    color:var(--muted);
+                                    font-size:10px;
+                                "
+                            >
+                                {{ delegation["resource_alias"] }}
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if delegation["scope"] == "VAULT" %}
+
+                                <span class="badge badge-red">
+                                    VAULT
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-blue">
+                                    {{ delegation["scope"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {{ delegation["policy_name"] }}
+
+                        </td>
+
+                        <td>
+                            v{{ delegation["policy_version"] }}
+                        </td>
+
+                        <td>
+                            {{ delegation["operation_id"] or "UNBOUND" }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     INSPECTOR
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            DELEGATION INSPECTOR
+        </div>
+
+        <span
+            id="delegationInspectorStatus"
+            class="badge"
+        >
+            SELECT A RECORD
+        </span>
+
+    </div>
+
+    <div
+        id="delegationInspector"
+        class="panel-body"
+    >
+
+        <div
+            style="
+                padding:35px;
+                text-align:center;
+                color:var(--muted);
+            "
+        >
+            Select a delegation to inspect its authority
+            relationship.
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<!-- =========================================================
+     RELATIONSHIP MODEL
+     ========================================================= -->
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            AUTHORITY MODEL
+        </div>
+
+        <span class="badge badge-amber">
+            CROSS-REFERENCE REQUIRED
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:
+                    repeat(
+                        auto-fit,
+                        minmax(170px, 1fr)
+                    );
+                gap:10px;
+                align-items:center;
+            "
+        >
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    PRINCIPAL
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    AUTHORITY
+                </div>
+
+                <div class="metric-note">
+                    identity granting delegated authority
+                </div>
+
+            </div>
+
+            <div
+                style="
+                    text-align:center;
+                    color:var(--muted);
+                    font-size:20px;
+                "
+            >
+                →
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    DELEGATION
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    SCOPE
+                </div>
+
+                <div class="metric-note">
+                    limited authority transfer
+                </div>
+
+            </div>
+
+            <div
+                style="
+                    text-align:center;
+                    color:var(--muted);
+                    font-size:20px;
+                "
+            >
+                →
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    DELEGATE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:17px;"
+                >
+                    SUBJECT
+                </div>
+
+                <div class="metric-note">
+                    identity receiving authority
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="grid">
+
+    <a
+        href="/reviews"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            CROSS-REFERENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            REVIEW LEDGER
+        </div>
+
+        <div class="metric-note">
+            Find the review associated with
+            the delegation's historical authority.
+        </div>
+
+    </a>
+
+    <a
+        href="/audit"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            NEXT EVIDENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            AUDIT STREAM
+        </div>
+
+        <div class="metric-note">
+            Determine whether the delegation
+            participates in a coherent operation trace.
+        </div>
+
+    </a>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        INVESTIGATOR NOTE
+    </div>
+
+    <div class="callout-text">
+        Compare the
+        <strong>principal</strong>,
+        <strong>delegate</strong>,
+        <strong>scope</strong>,
+        <strong>policy version</strong>
+        and
+        <strong>state</strong>
+        with the corresponding review and operation records.
+        A plausible delegation can still belong to the wrong
+        authorization chain.
+    </div>
+
+</div>
+
+<script>
+
+function inspectDelegation(row) {
+
+    const cells =
+        row.querySelectorAll("td");
+
+    const delegation =
+        cells[0].innerText.trim();
+
+    const state =
+        cells[1].innerText.trim();
+
+    const principal =
+        cells[2].innerText.trim();
+
+    const delegate =
+        cells[3].innerText.trim();
+
+    const resource =
+        cells[4].innerText.trim();
+
+    const scope =
+        cells[5].innerText.trim();
+
+    const policy =
+        cells[6].innerText.trim();
+
+    const version =
+        cells[7].innerText.trim();
+
+    const operation =
+        cells[8].innerText.trim();
+
+    document
+        .querySelectorAll(".delegation-row")
+        .forEach(
+            item => {
+                item.style.background = "";
+            }
+        );
+
+    row.style.background =
+        "rgba(143, 185, 216, 0.07)";
+
+    const status =
+        document.getElementById(
+            "delegationInspectorStatus"
+        );
+
+    status.innerText =
+        "RECORD SELECTED";
+
+    status.className =
+        "badge badge-green";
+
+    document.getElementById(
+        "delegationInspector"
+    ).innerHTML = `
+
+        <div class="grid">
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    DELEGATION
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:16px;
+                        word-break:break-all;
+                    "
+                >
+                    ${delegation}
+                </div>
+
+                <div class="metric-note">
+                    authority transfer identifier
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    STATE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${state}
+                </div>
+
+                <div class="metric-note">
+                    lifecycle state
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    SCOPE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${scope}
+                </div>
+
+                <div class="metric-note">
+                    delegated operation scope
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    POLICY
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:18px;"
+                >
+                    ${version}
+                </div>
+
+                <div class="metric-note">
+                    ${policy}
+                </div>
+
+            </div>
+
+            <div class="metric">
+
+                <div class="metric-label">
+                    OPERATION
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:16px;
+                        word-break:break-all;
+                    "
+                >
+                    ${operation}
+                </div>
+
+                <div class="metric-note">
+                    authorization operation bound to this delegation
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div class="panel-title">
+                    AUTHORITY RELATIONSHIP
+                </div>
+
+            </div>
+
+            <div class="panel-body">
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:
+                            repeat(
+                                auto-fit,
+                                minmax(190px, 1fr)
+                            );
+                        gap:15px;
+                    "
+                >
+
+                    <div class="callout">
+
+                        <div class="callout-title">
+                            PRINCIPAL
+                        </div>
+
+                        <div class="callout-text">
+
+                            <strong>
+                                ${principal}
+                            </strong>
+
+                            <br><br>
+
+                            Source of delegated authority.
+
+                        </div>
+
+                    </div>
+
+                    <div class="callout">
+
+                        <div class="callout-title">
+                            DELEGATE
+                        </div>
+
+                        <div class="callout-text">
+
+                            <strong>
+                                ${delegate}
+                            </strong>
+
+                            <br><br>
+
+                            Recipient of the delegated scope.
+
+                        </div>
+
+                    </div>
+
+                    <div class="callout">
+
+                        <div class="callout-title">
+                            RESOURCE
+                        </div>
+
+                        <div class="callout-text">
+
+                            <strong>
+                                ${resource}
+                            </strong>
+
+                            <br><br>
+
+                            Resource governed by the delegation.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="callout">
+
+            <div class="callout-title">
+                VALIDATION QUESTIONS
+            </div>
+
+            <div class="callout-text">
+
+                Does the principal match the reviewed authority?
+
+                <br>
+
+                Does the delegate match the operation subject?
+
+                <br>
+
+                Does the scope match the requested operation?
+
+                <br>
+
+                Does the policy revision match the review?
+
+                <br>
+
+                Does the lifecycle state agree with the timeline?
+
+                <br><br>
+
+                These questions must be answered using
+                evidence from other sections of the system.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <a
+            href="/reviews"
+            style="
+                display:inline-block;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+                background:var(--accent-soft);
+            "
+        >
+            COMPARE REVIEWS →
+        </a>
+
+        <a
+            href="/audit"
+            style="
+                display:inline-block;
+                margin-left:8px;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+            "
+        >
+            TRACE AUDIT →
+        </a>
+
+    `;
+}
+
+document
+    .getElementById("delegationSearch")
+    .addEventListener(
+        "input",
+        function () {
+
+            const query =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+            document
+                .querySelectorAll(
+                    ".delegation-row"
+                )
+                .forEach(
+                    row => {
+
+                        const value =
+                            row.dataset.search
+                                .replace(/\s+/g, " ")
+                                .toLowerCase();
+
+                        row.style.display =
+                            value.includes(query)
+                                ? ""
+                                : "none";
+
+                    }
+                );
+
+        }
+    );
+
+</script>
+
+{% endblock %}

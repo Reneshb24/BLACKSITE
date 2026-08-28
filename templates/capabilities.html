@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Capability Intelligence
+{% endblock %}
+
+{% block section %}
+CAPABILITY INTELLIGENCE
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        06 // AUTHORIZATION CREDENTIAL FORENSICS
+    </div>
+
+    <h1>
+        CAPABILITY INTELLIGENCE
+    </h1>
+
+    <div class="subtitle">
+        Capabilities represent authorization artifacts produced
+        by the system. A capability is useful only when its
+        operation, subject, resource, scope, policy revision,
+        lifecycle and validity window agree.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        SECURITY BOUNDARY
+    </div>
+
+    <div class="callout-text">
+        Internal token material is never displayed here.
+        Investigate the capability's
+        <strong>bindings</strong>
+        and
+        <strong>lifecycle</strong>
+        rather than attempting to recover its internal digest.
+    </div>
+
+</div>
+
+<br>
+
+{% set active_count = capabilities
+    |selectattr("state", "equalto", "ACTIVE")
+    |list|length
+%}
+
+{% set expired_count = capabilities
+    |selectattr("state", "equalto", "EXPIRED")
+    |list|length
+%}
+
+{% set revoked_count = capabilities
+    |selectattr("state", "equalto", "REVOKED")
+    |list|length
+%}
+
+<div class="grid">
+
+    <div class="metric">
+        <div class="metric-label">
+            TOTAL CAPABILITIES
+        </div>
+
+        <div class="metric-value">
+            {{ capabilities|length }}
+        </div>
+
+        <div class="metric-note">
+            authorization artifacts
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            ACTIVE
+        </div>
+
+        <div
+            class="metric-value"
+            style="color:var(--green);"
+        >
+            {{ active_count }}
+        </div>
+
+        <div class="metric-note">
+            active capability records
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            EXPIRED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color:var(--red);"
+        >
+            {{ expired_count }}
+        </div>
+
+        <div class="metric-note">
+            outside their validity state
+        </div>
+    </div>
+
+    <div class="metric">
+        <div class="metric-label">
+            REVOKED
+        </div>
+
+        <div
+            class="metric-value"
+            style="color:var(--red);"
+        >
+            {{ revoked_count }}
+        </div>
+
+        <div class="metric-note">
+            lifecycle-invalid artifacts
+        </div>
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            CAPABILITY LEDGER
+        </div>
+
+        <span
+            id="visibleCount"
+            class="badge badge-blue"
+        >
+            {{ capabilities|length }} RECORDS
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:
+                    repeat(
+                        auto-fit,
+                        minmax(200px, 1fr)
+                    );
+                gap:10px;
+                margin-bottom:15px;
+            "
+        >
+
+            <input
+                id="capabilitySearch"
+                type="text"
+                placeholder="SEARCH CAPABILITY / OPERATION / SUBJECT / RESOURCE..."
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+
+            <select
+                id="capabilityState"
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+                <option value="">ALL STATES</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="EXPIRED">EXPIRED</option>
+                <option value="REVOKED">REVOKED</option>
+            </select>
+
+            <select
+                id="capabilityScope"
+                style="
+                    width:100%;
+                    padding:12px 14px;
+                    background:#090e13;
+                    color:var(--text);
+                    border:1px solid var(--border);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    outline:none;
+                "
+            >
+                <option value="">ALL SCOPES</option>
+                <option value="VAULT">VAULT</option>
+                <option value="PROJECT">PROJECT</option>
+                <option value="CONTROL">CONTROL</option>
+            </select>
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table id="capabilityTable">
+
+                <thead>
+
+                    <tr>
+                        <th>CAPABILITY</th>
+                        <th>STATE</th>
+                        <th>OPERATION</th>
+                        <th>SUBJECT</th>
+                        <th>RESOURCE</th>
+                        <th>SCOPE</th>
+                        <th>VERSION</th>
+                        <th>ISSUED</th>
+                        <th>EXPIRES</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for capability in capabilities %}
+
+                    <tr
+                        class="capability-row"
+                        data-state="{{ capability['state'] }}"
+                        data-scope="{{ capability['scope'] }}"
+                        data-search="
+                            {{ capability['id'] }}
+                            {{ capability['operation_id'] }}
+                            {{ capability['subject_username'] }}
+                            {{ capability['resource_name'] }}
+                            {{ capability['scope'] }}
+                            {{ capability['policy_version'] }}
+                    "
+                        onclick="inspectCapability(this)"
+                        style="cursor:pointer;"
+                    >
+
+                        <td>
+
+                            <span
+                                class="mono"
+                                style="color:var(--accent);"
+                            >
+                                {{ capability["id"] }}
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            {% if capability["state"] == "ACTIVE" %}
+
+                                <span class="badge badge-green">
+                                    ACTIVE
+                                </span>
+
+                            {% elif capability["state"] in ["EXPIRED", "REVOKED"] %}
+
+                                <span class="badge badge-red">
+                                    {{ capability["state"] }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge">
+                                    {{ capability["state"] }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            <span
+                                class="mono"
+                                style="font-size:10px;"
+                            >
+                                {{ capability["operation_id"] }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ capability["subject_username"] }}
+                        </td>
+
+                        <td>
+                            {{ capability["resource_name"] }}
+                        </td>
+
+                        <td>
+                            {% if capability["scope"] == "VAULT" %}
+
+                                <span class="badge badge-red">
+                                    VAULT
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-blue">
+                                    {{ capability["scope"] }}
+                                </span>
+
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            v{{ capability["policy_version"] }}
+                        </td>
+
+                        <td>
+                            <span style="font-size:10px;">
+                                {{ capability["issued_at"] }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span style="font-size:10px;">
+                                {{ capability["expires_at"] }}
+                            </span>
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            CAPABILITY INSPECTOR
+        </div>
+
+        <span
+            id="capabilityInspectorStatus"
+            class="badge"
+        >
+            SELECT A CAPABILITY
+        </span>
+
+    </div>
+
+    <div
+        id="capabilityInspector"
+        class="panel-body"
+    >
+
+        <div
+            style="
+                padding:35px;
+                text-align:center;
+                color:var(--muted);
+            "
+        >
+            Select a capability to inspect its public
+            authorization bindings.
+        </div>
+
+    </div>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        FINAL VALIDATION MODEL
+    </div>
+
+    <div class="callout-text">
+        The vault does not trust a capability identifier by
+        itself. The submitted artifact must correspond to the
+        authenticated subject, authorization operation, target
+        resource, requested scope and policy revision, while
+        remaining valid within the challenge timeline.
+    </div>
+
+</div>
+
+<br>
+
+<div class="grid">
+
+    <a
+        href="/operations"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            TRACE BACK
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            OPERATIONS
+        </div>
+
+        <div class="metric-note">
+            Compare capability bindings against the
+            originating authorization request.
+        </div>
+
+    </a>
+
+    <a
+        href="/vault"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            FINAL TARGET
+        </div>
+
+        <div
+            class="metric-value"
+            style="
+                font-size:17px;
+                color:var(--red);
+            "
+        >
+            SEALED VAULT
+        </div>
+
+        <div class="metric-note">
+            Submit the final authorization proof.
+        </div>
+
+    </a>
+
+</div>
+
+<script>
+
+function inspectCapability(row) {
+
+    const cells =
+        row.querySelectorAll("td");
+
+    const capability =
+        cells[0].innerText.trim();
+
+    const state =
+        cells[1].innerText.trim();
+
+    const operation =
+        cells[2].innerText.trim();
+
+    const subject =
+        cells[3].innerText.trim();
+
+    const resource =
+        cells[4].innerText.trim();
+
+    const scope =
+        cells[5].innerText.trim();
+
+    const version =
+        cells[6].innerText.trim();
+
+    const issued =
+        cells[7].innerText.trim();
+
+    const expires =
+        cells[8].innerText.trim();
+
+    document
+        .querySelectorAll(".capability-row")
+        .forEach(
+            item => {
+                item.style.background = "";
+            }
+        );
+
+    row.style.background =
+        "rgba(143, 185, 216, 0.07)";
+
+    document.getElementById(
+        "capabilityInspectorStatus"
+    ).innerText =
+        "CAPABILITY SELECTED";
+
+    document.getElementById(
+        "capabilityInspectorStatus"
+    ).className =
+        "badge badge-green";
+
+    document.getElementById(
+        "capabilityInspector"
+    ).innerHTML = `
+
+        <div class="grid">
+
+            <div class="metric">
+                <div class="metric-label">
+                    CAPABILITY
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="
+                        font-size:15px;
+                        word-break:break-all;
+                    "
+                >
+                    ${capability}
+                </div>
+
+                <div class="metric-note">
+                    public capability identifier
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    STATE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${state}
+                </div>
+
+                <div class="metric-note">
+                    recorded lifecycle state
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    SCOPE
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${scope}
+                </div>
+
+                <div class="metric-note">
+                    delegated authorization scope
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">
+                    POLICY
+                </div>
+
+                <div
+                    class="metric-value"
+                    style="font-size:19px;"
+                >
+                    ${version}
+                </div>
+
+                <div class="metric-note">
+                    capability policy revision
+                </div>
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="panel">
+
+            <div class="panel-header">
+                <div class="panel-title">
+                    BINDINGS
+                </div>
+            </div>
+
+            <div
+                class="panel-body"
+                style="
+                    display:grid;
+                    grid-template-columns:
+                        repeat(
+                            auto-fit,
+                            minmax(210px, 1fr)
+                        );
+                    gap:15px;
+                "
+            >
+
+                <div class="callout">
+                    <div class="callout-title">
+                        OPERATION
+                    </div>
+
+                    <div class="callout-text">
+                        ${operation}
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <div class="callout-title">
+                        SUBJECT
+                    </div>
+
+                    <div class="callout-text">
+                        ${subject}
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <div class="callout-title">
+                        RESOURCE
+                    </div>
+
+                    <div class="callout-text">
+                        ${resource}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="callout">
+
+            <div class="callout-title">
+                VALIDITY WINDOW
+            </div>
+
+            <div class="callout-text">
+
+                Issued:
+                <strong>${issued}</strong>
+
+                <br><br>
+
+                Expires:
+                <strong>${expires}</strong>
+
+                <br><br>
+
+                Compare this interval with the challenge
+                scenario clock and the originating operation.
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <a
+            href="/operations"
+            style="
+                display:inline-block;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+                background:var(--accent-soft);
+            "
+        >
+            INVESTIGATE OPERATION →
+        </a>
+
+        <a
+            href="/vault"
+            style="
+                display:inline-block;
+                margin-left:8px;
+                padding:10px 14px;
+                border:1px solid var(--border-strong);
+                border-radius:5px;
+            "
+        >
+            OPEN SEALED VAULT →
+        </a>
+
+    `;
+}
+
+function filterCapabilities() {
+
+    const query =
+        document
+            .getElementById("capabilitySearch")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const state =
+        document
+            .getElementById("capabilityState")
+            .value;
+
+    const scope =
+        document
+            .getElementById("capabilityScope")
+            .value;
+
+    let visible = 0;
+
+    document
+        .querySelectorAll(".capability-row")
+        .forEach(
+            row => {
+
+                const searchValue =
+                    row.dataset.search
+                        .replace(/\s+/g, " ")
+                        .toLowerCase();
+
+                const matchesSearch =
+                    searchValue.includes(query);
+
+                const matchesState =
+                    !state ||
+                    row.dataset.state === state;
+
+                const matchesScope =
+                    !scope ||
+                    row.dataset.scope === scope;
+
+                const show =
+                    matchesSearch
+                    && matchesState
+                    && matchesScope;
+
+                row.style.display =
+                    show ? "" : "none";
+
+                if (show) {
+                    visible++;
+                }
+
+            }
+        );
+
+    document.getElementById(
+        "visibleCount"
+    ).innerText =
+        `${visible} RECORDS`;
+}
+
+document
+    .getElementById("capabilitySearch")
+    .addEventListener(
+        "input",
+        filterCapabilities
+    );
+
+document
+    .getElementById("capabilityState")
+    .addEventListener(
+        "change",
+        filterCapabilities
+    );
+
+document
+    .getElementById("capabilityScope")
+    .addEventListener(
+        "change",
+        filterCapabilities
+    );
+
+</script>
+
+{% endblock %}

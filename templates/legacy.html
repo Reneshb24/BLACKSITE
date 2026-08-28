@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AEGIS // Legacy Authority</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #070a0f;
+            color: #d8dee9;
+            font-family: monospace;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            border: 1px solid #394452;
+            background: #0d1219;
+            padding: 25px;
+            margin-bottom: 22px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            letter-spacing: 5px;
+        }
+
+        h2 {
+            letter-spacing: 2px;
+        }
+
+        .muted {
+            color: #7f8a99;
+        }
+
+        .warning {
+            border-left: 4px solid #d08770;
+            background: #111820;
+            padding: 16px;
+            margin-bottom: 22px;
+            line-height: 1.6;
+        }
+
+        .panel {
+            border: 1px solid #394452;
+            background: #0d1219;
+            padding: 25px;
+            margin-bottom: 22px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #252d38;
+        }
+
+        td:first-child {
+            width: 38%;
+            color: #81a1c1;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 7px;
+            background: #05080c;
+            border: 1px solid #46515f;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #81a1c1;
+        }
+
+        .field {
+            margin-bottom: 17px;
+        }
+
+        button {
+            padding: 13px 24px;
+            border: 1px solid #627083;
+            background: #1d2835;
+            color: white;
+            font-family: monospace;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #29394b;
+        }
+
+        .success {
+            border: 1px solid #7fa870;
+            background: #101810;
+            padding: 20px;
+        }
+
+        .error {
+            border: 1px solid #a85d5d;
+            background: #180f0f;
+            padding: 20px;
+        }
+
+        .token {
+            margin-top: 15px;
+            padding: 16px;
+            background: #050709;
+            border: 1px solid #303943;
+            word-break: break-all;
+            color: #a3be8c;
+        }
+
+        .terminal {
+            color: #a3be8c;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>AEGIS // LEGACY AUTHORITY</h1>
+
+        <div>
+            AUTHENTICATED IDENTITY:
+            <strong>{{ user.username }}</strong>
+        </div>
+
+        <div class="muted">
+            subsystem:
+            legacy-authority-controller
+        </div>
+
+    </div>
+
+
+    <div class="warning">
+
+        <strong>LEGACY SUBSYSTEM</strong>
+
+        <br>
+
+        This controller predates the current centralized
+        authorization service.
+
+        Historical authorization records are accepted for
+        compatibility operations.
+
+    </div>
+
+
+    <div class="panel">
+
+        <h2>BLACKSITE CONTEXT</h2>
+
+        {% if context %}
+
+        <table>
+
+            <tr>
+                <td>Resource</td>
+                <td>{{ context["resource_name"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Resource ID</td>
+                <td>{{ context["resource_id"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Archive Alias</td>
+                <td>{{ context["resource_alias"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Classification</td>
+                <td>{{ context["classification"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Current Policy</td>
+                <td>{{ context["policy_name"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Current Policy Version</td>
+                <td>{{ context["current_policy_version"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Required Role</td>
+                <td>{{ context["required_role"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Required Clearance</td>
+                <td>{{ context["required_clearance"] }}</td>
+            </tr>
+
+            <tr>
+                <td>Scope</td>
+                <td>{{ context["scope"] }}</td>
+            </tr>
+
+        </table>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="panel">
+
+        <h2>AUTHORIZATION RECONSTRUCTION</h2>
+
+        <p class="muted">
+            Legacy compatibility requires reconstruction
+            of the historical authorization context.
+        </p>
+
+
+        <form method="POST">
+
+            <div class="field">
+
+                <label>
+                    RESOURCE ID
+                </label>
+
+                <input
+                    name="resource_id"
+                    placeholder="res_..."
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    REVIEW ID
+                </label>
+
+                <input
+                    name="review_id"
+                    placeholder="rev_..."
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    DELEGATION ID
+                </label>
+
+                <input
+                    name="delegation_id"
+                    placeholder="del_..."
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    HISTORICAL POLICY VERSION
+                </label>
+
+                <input
+                    name="version"
+                    placeholder="?"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    DELEGATION SCOPE
+                </label>
+
+                <input
+                    name="scope"
+                    placeholder="?"
+                    required
+                >
+
+            </div>
+
+
+            <button type="submit">
+                RECONSTRUCT AUTHORITY
+            </button>
+
+        </form>
+
+    </div>
+
+
+    {% if message %}
+
+        {% if success %}
+
+        <div class="success">
+
+            <h2>
+                LEGACY AUTHORIZATION ACCEPTED
+            </h2>
+
+            <p>
+                Historical authorization context accepted.
+            </p>
+
+            <p>
+                Derived vault token:
+            </p>
+
+            <div class="token">
+                {{ token }}
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="error">
+
+            <h2>
+                AUTHORIZATION REJECTED
+            </h2>
+
+            <p>
+                {{ message }}
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    {% endif %}
+
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}
+AEGIS BLACKSITE // Sealed Vault
+{% endblock %}
+
+{% block section %}
+SEALED VAULT
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div class="eyebrow">
+        FINAL // R5 RESTRICTED TARGET
+    </div>
+
+    <h1>
+        SEALED BLACKSITE VAULT
+    </h1>
+
+    <div class="subtitle">
+        This endpoint performs independent server-side
+        validation of the submitted authorization proof.
+        Operation identity and capability identity must
+        correspond to the same authenticated authorization chain.
+    </div>
+
+</div>
+
+<div class="callout">
+
+    <div class="callout-title">
+        ZERO-TRUST AUTHORIZATION GATE
+    </div>
+
+    <div class="callout-text">
+        Knowing an operation ID or capability ID is not
+        sufficient. The server validates the complete
+        authorization relationship before revealing the vault.
+    </div>
+
+</div>
+
+<br>
+
+<div class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            AUTHORIZATION PROOF
+        </div>
+
+        <span class="badge badge-red">
+            R5 // SEALED
+        </span>
+
+    </div>
+
+    <div class="panel-body">
+
+        <form method="POST">
+
+            <label
+                style="
+                    display:block;
+                    margin-bottom:8px;
+                    color:#9aa8b3;
+                    font-size:10px;
+                    letter-spacing:1.3px;
+                "
+            >
+                AUTHORIZATION OPERATION
+            </label>
+
+            <input
+                type="text"
+                name="operation_id"
+                placeholder="op_..."
+                autocomplete="off"
+                required
+                style="
+                    width:100%;
+                    padding:13px 14px;
+                    background:#080c11;
+                    color:var(--text);
+                    border:1px solid var(--border-strong);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:13px;
+                    outline:none;
+                "
+            >
+
+            <br><br>
+
+            <label
+                style="
+                    display:block;
+                    margin-bottom:8px;
+                    color:#9aa8b3;
+                    font-size:10px;
+                    letter-spacing:1.3px;
+                "
+            >
+                CAPABILITY IDENTIFIER
+            </label>
+
+            <input
+                type="text"
+                name="capability_id"
+                placeholder="cap_..."
+                autocomplete="off"
+                required
+                style="
+                    width:100%;
+                    padding:13px 14px;
+                    background:#080c11;
+                    color:var(--text);
+                    border:1px solid var(--border-strong);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:13px;
+                    outline:none;
+                "
+            >
+
+            <br>
+
+            <button
+                type="submit"
+                style="
+                    margin-top:18px;
+                    padding:12px 18px;
+                    background:#111b24;
+                    color:var(--text);
+                    border:1px solid var(--border-strong);
+                    border-radius:5px;
+                    font-family:inherit;
+                    font-size:11px;
+                    letter-spacing:1px;
+                    cursor:pointer;
+                "
+            >
+                VERIFY AUTHORIZATION
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% if message %}
+
+    <br>
+
+    {% if success %}
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div class="panel-title">
+                    AUTHORIZATION RESULT
+                </div>
+
+                <span class="badge badge-green">
+                    VERIFIED
+                </span>
+
+            </div>
+
+            <div class="panel-body">
+
+                <div class="callout">
+
+                    <div class="callout-title">
+                        VAULT OPEN
+                    </div>
+
+                    <div class="callout-text">
+                        {{ message }}
+                    </div>
+
+                </div>
+
+                <br>
+
+                <div
+                    style="
+                        padding:24px;
+                        border:1px solid
+                            rgba(
+                                127,
+                                214,
+                                163,
+                                0.35
+                            );
+                        background:
+                            rgba(
+                                127,
+                                214,
+                                163,
+                                0.04
+                            );
+                        border-radius:6px;
+                    "
+                >
+
+                    <div class="metric-label">
+                        CHALLENGE COMPLETION CREDENTIAL
+                    </div>
+
+                    <div
+                        style="
+                            margin-top:12px;
+                            color:var(--green);
+                            font-size:21px;
+                            letter-spacing:1.5px;
+                            word-break:break-all;
+                        "
+                    >
+                        {{ flag }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <div class="panel-title">
+                    AUTHORIZATION RESULT
+                </div>
+
+                <span class="badge badge-red">
+                    REJECTED
+                </span>
+
+            </div>
+
+            <div class="panel-body">
+
+                <div class="callout">
+
+                    <div class="callout-title">
+                        ACCESS DENIED
+                    </div>
+
+                    <div class="callout-text">
+                        {{ message }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+{% endif %}
+
+<br>
+
+<div class="grid">
+
+    <a
+        href="/capabilities"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            REVIEW EVIDENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            CAPABILITIES
+        </div>
+
+        <div class="metric-note">
+            Inspect public capability bindings
+            and lifecycle state.
+        </div>
+
+    </a>
+
+    <a
+        href="/operations"
+        class="metric"
+    >
+
+        <div class="metric-label">
+            REVIEW EVIDENCE
+        </div>
+
+        <div
+            class="metric-value"
+            style="font-size:17px;"
+        >
+            OPERATIONS
+        </div>
+
+        <div class="metric-note">
+            Cross-reference the originating
+            authorization operation.
+        </div>
+
+    </a>
+
+</div>
+
+<br>
+
+<div class="callout">
+
+    <div class="callout-title">
+        SECURITY NOTICE
+    </div>
+
+    <div class="callout-text">
+        Failed submissions intentionally return limited
+        information. The authorization engine evaluates the
+        complete chain server-side.
+    </div>
+
+</div>
+
+{% endblock %}

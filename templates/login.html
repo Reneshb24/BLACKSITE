@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AEGIS BLACKSITE</title>
+</head>
+
+<body>
+
+    <h1>AEGIS BLACKSITE</h1>
+
+    <h2>BLACKSITE AUTHORIZATION NETWORK</h2>
+
+    {% if error %}
+        <p style="color:red;">
+            {{ error }}
+        </p>
+    {% endif %}
+
+    <form method="POST">
+
+        <label>
+            Operator identity:
+        </label>
+
+        <input
+            type="text"
+            name="username"
+            required
+        >
+
+        <button type="submit">
+            ESTABLISH SESSION
+        </button>
+
+    </form>
+
+</body>
+</html>
