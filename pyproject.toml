@@ -1,2 +1,11 @@
+[project]
+name = "aegis-blacksite"
+version = "0.1.0"
+description = "AEGIS BLACKSITE challenge"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "Flask>=3.1,<4",
+]
+
 [tool.vercel]
 entrypoint = "run:app"
